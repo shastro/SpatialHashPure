@@ -93,3 +93,20 @@ char* load_file(char const* path)
     buffer[length] = '\0';
     return buffer;
 }
+
+float squaredMag(sf::Vector2f vec)
+{
+  return (vec.x*vec.x) + (vec.y * vec.y);
+}
+
+void viMult(sf::Vector2f &vec, float val)
+{
+  vec.x = vec.x * val;
+  vec.y = vec.y * val;
+}
+
+sf::Vector2f vrMult(sf::Vector2f &vec, float val)
+{
+  sf::Vector2f ret = sf::Vector2f(vec.x*val, vec.y*val);
+  return ret;
+}

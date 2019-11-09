@@ -12,34 +12,62 @@ private:
     sf::Vector2f m_pos; //Position
     sf::Vector2f m_vel; //Velocity
     sf::Vector2f m_acc; //Acceleration
-    float m_v_mag;
+    sf::Vector2f m_p;   //Momentum
 
     //Radius
     int m_radius;
-    
+    float m_mass;
+  
+  public:  
     //Identification
     unsigned int m_id;
-    bool m_colliding;
-public:
+
+    //Hash Ids
+    int bucketids[4];
+    int bucketids_Max; 
+
     //SFML
     sf::Color m_color;
     sf::CircleShape m_shape;
     sf::RenderWindow *m_window;
+    int m_winH;
+    int m_winW;
 
-    Particle(sf::Vector2f pos, sf::Vector2f vel, sf::Vector2f acc, int radius, unsigned int id, float v_mag, sf::RenderWindow *window)
-    :m_pos(pos.x, pos.y), m_vel(vel.x, vel.y), m_acc(acc.x, acc.y)
+
+
+    Particle(sf::Vector2f pos, sf::Vector2f vel, int radius, float mass, unsigned int id, sf::RenderWindow *window)
+    :m_pos(pos.x, pos.y), m_vel(vel.x, vel.y)
     {
-       m_radius = radius;
-       m_id     = id;
-       m_window = window;
-       m_v_mag  = v_mag;
+
+        bucketids_Max = 0;
+        m_radius = radius;
+        m_id     = id;
+        m_window = window;
+        m_winW   = 1000;
+        m_winW   = 1000;
+        m_mass   = mass;
+        m_p = m_vel * m_mass;
     }
    
 public: 
-    void updateData(struct p_data_t& p_data);
-    void drawBoundingBox();
-    void draw(bool DRAW_OUTLINE, int PARTICLE_COUNT);
+    
 
+
+    
+    
+
+    //Directives
+    void update(double time_delta);
+    void draw(bool DRAW_OUTLINE, int PARTICLE_COUNT);
+    void applyForce(sf::Vector2f force, double time_delta);
+    void drawBoundingBox();
+
+    //Getters
+    float getRadius();
+    float getMass();
+    sf::Vector2f &getPos();
+    //Setters
+    void addBucket(int bucketid);
 };
 
 #endif

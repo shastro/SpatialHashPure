@@ -1,41 +1,6 @@
 #include "grid.hpp"
 
 
-////////////
-// Bucket //
-////////////
-
-void Bucket::fill(std::vector <Ball>& iBalls)
-{
-    // if (!(iBalls.empty())) {
-    //     vBalls.insert(vBalls.end(), iBalls.begin(), iBalls.end());
-    // } else {
-    //     vBalls = iBalls;
-    // }
-}
-
-void Bucket::insert(Ball &ball)
-{
-    Balls.emplace_back(ball);
-    //PRINT(index)
-    //vBalls.emplace_back(ball);
-
-}
-
-std::vector<Ball> *Bucket::get()
-{
-    return &Balls;
-}
-
-
-void Bucket::clear()
-{
-    //free(Balls);
-    Balls.clear();
-    Balls.shrink_to_fit();
-    std::vector<Ball>().swap(Balls);
-}
-
 //////////////////
 // Spatial Hash //
 //////////////////
@@ -52,131 +17,154 @@ SpatialHash::SpatialHash(int width, int height, int cellsize)
         int rows = m_height / m_cellsize;
 
         nBuckets = (cols + 1) * (rows + 1);
-        buckets = new Bucket[nBuckets];
-        ballqueue = new std::vector<Ball>;
-        ballqueue->reserve(sizeof(Ball) * 30);
 
-        LOG("CS: ", m_cellsize)
-        LOG("nBuckets: ", nBuckets)
+        table = new std::vector<std::list<Particle>>;
+        // table = new  std::vector<std::list<Particle>> table(nBuckets, std::list<Particle>(1));
+
+
+        table->reserve(nBuckets);
+        for (int i = 0; i < nBuckets; i++){
+            std::list<Particle> *temp = new std::list<Particle>;
+            (*table).push_back(*temp);
+        }
+
+        // std::fill(table->begin(), table->end(), std::list<Particle>(1));
+        // std::vector<std::list<Particle>> table(nBuckets, std::list<Particle>(1));
+
     }
     
-void SpatialHash::build(std::vector<Ball>& vecBalls)
+void SpatialHash::build(std::vector<Particle>& vecParticles)
 {
 
-    //Place balls in buckets
-    for (auto & ball : vecBalls) {
-        insert(ball);
+    //Place Particles in buckets
+    for (auto & Particle : vecParticles) {
+        insert(Particle);
     }
 
 }
 
-std::vector<Ball>* SpatialHash::query(Ball &ball)
-{
-    //std::vector<Ball> *ballqueue = new std::vector<Ball>;
-     Bucket bucket;
-    std::vector<Ball> *b_balls;
+// std::vector<Particle>* SpatialHash::query(Particle &Particle)
+// {
+//     std::vector<Particle> *Particlequeue = new std::vector<Particle>;
 
-    //Add relevant buckets to ball buckets
-    for (int i = 0 ; i < ball.bucketids_Max; i++) {
-        int id = ball.bucketids[i];
+//     std::vector<Particle> *b_Particles;
+
+//     //Add relevant buckets to Particle buckets
+//     for (int i = 0 ; i < Particle.bucketids_Max; i++) {
+//         int id = Particle.bucketids[i];
             
-        // LOG( "max ",ball.bucketids_Max)
-        // LOG("id ", id)
-        bucket = buckets[id];
-        b_balls = bucket.get();
+//         // LOG( "max ",Particle.bucketids_Max)
+//         // LOG("id ", id)
+//         bucket = buckets[id];
+//         b_Particles = bucket.get();
 
-        //(*ballqueue) += (*b_balls);
-       // ballqueue->reserve(ballqueue->size() + b_balls->size());
-        ballqueue->insert(std::end(*ballqueue), std::begin(*b_balls), std::end(*b_balls));
-            // (echo ../bin/ParticleRenderer sp1.json ; echo ../bin/ParticleRenderer sp2.json) | parallel 
-    }
+//         //(*Particlequeue) += (*b_Particles);
+//        // Particlequeue->reserve(Particlequeue->size() + b_Particles->size());
+//         Particlequeue->insert(std::end(*Particlequeue), std::begin(*b_Particles), std::end(*b_Particles));
+//             // (echo ../bin/ParticleRenderer sp1.json ; echo ../bin/ParticleRenderer sp2.json) | parallel 
+//     }
 
-    std::vector<Ball>().swap(*b_balls);
-   // PRINT("bb " << b_balls->size())
-   // PRINT("bq " << ballqueue->size())
-   //b_balls->clear();
-    return ballqueue;
-}
+//     std::vector<Particle>().swap(*b_Particles);
+//    // PRINT("bb " << b_Particles->size())
+//    // PRINT("bq " << Particlequeue->size())
+//    b_Particles->clear();
+//     return Particlequeue;
+// }
 
-void SpatialHash::insert(Ball& ball)
+void SpatialHash::insert(Particle& particle)
 {
     // Upper Left
-    float ulX = ball.m_pos[0] - ball.m_radius;
-    float ulY = ball.m_pos[1] - ball.m_radius;
+    float ulX = particle.getPos().x - particle.getRadius();
+    float ulY = particle.getPos().y - particle.getRadius();
 
     //Bottom Right
-    float brX = ball.m_pos[0] + ball.m_radius;
-    float brY = ball.m_pos[1] + ball.m_radius;
+    float brX = particle.getPos().x + particle.getRadius();
+    float brY = particle.getPos().y + particle.getRadius();
 
     //Bottom Left
     float blX = ulX;
-    float blY = ulY + (ball.m_radius + ball.m_radius);
+    float blY = ulY + (particle.getRadius() + particle.getRadius());
 
     //Upper Right
-    float urX = ulX + (ball.m_radius + ball.m_radius);
+    float urX = ulX + (particle.getRadius() + particle.getRadius());
     float urY = ulY;
 
     //ids
-    int ulId = pointQuery(ulX, ulY);
-    int brId = pointQuery(brX, brY);
-    int blId = pointQuery(blX, blY);
-    int urId = pointQuery(urX, urY);
+    int ulId = pointHash(ulX, ulY);
+    int brId = pointHash(brX, brY);
+    int blId = pointHash(blX, blY);
+    int urId = pointHash(urX, urY);
 
     // PRINT("ul " << ulId << " br " << brId << " bl " << blId << " ur " << urId)
     if (ulId == brId) {
-        ball.addBucket(ulId);
-        (buckets[ulId]).insert(ball);
-        // Ball must be in 4 buckets
-    } else if ((ulId != brId) && (ulId != blId) && (ulId != urId)) {
-        ball.addBucket(ulId); //Upp Left
-        ball.addBucket(brId); //Bot Right
-        ball.addBucket(urId); //Upp Right
-        ball.addBucket(blId); //Bot Left
-        
-        (buckets[ulId]).insert(ball);
-        (buckets[brId]).insert(ball);
-        (buckets[urId]).insert(ball);
-        (buckets[blId]).insert(ball);
-  
-        //Ball must be in two buckets
-    } else {
-        ball.addBucket(ulId);
-        ball.addBucket(brId);
+        particle.addBucket(ulId);
+        (*table)[ulId].push_back(particle);
 
-        (buckets[ulId]).insert(ball);
-        (buckets[brId]).insert(ball);
+    } else if ((ulId != brId) && (ulId != blId) && (ulId != urId)) {
+        particle.addBucket(ulId); //Upp Left
+        particle.addBucket(brId); //Bot Right
+        particle.addBucket(urId); //Upp Right
+        particle.addBucket(blId); //Bot Left
+        
+        (*table)[ulId].push_back(particle);
+        (*table)[brId].push_back(particle);
+        (*table)[urId].push_back(particle);
+        (*table)[blId].push_back(particle);
+  
+        //particle must be in two buckets
+    } else {
+        particle.addBucket(ulId);
+        particle.addBucket(brId);
+
+        (*table)[ulId].push_back(particle);
+        (*table)[brId].push_back(particle);
     }
     // PRINT(buckets[50].get()->size())
 
 }
 
-int SpatialHash::pointQuery(float x, float y)
+int SpatialHash::pointHash(float x, float y)
 {
     float cellX = floor(x / m_cellsize);
     float cellY = floor(y / m_cellsize);
-    return (int)cellX + ((int)cellY * (m_width / m_cellsize));
-    //return buckets + bucketid;
-}
-void SpatialHash::clear()
-{
-    for (int i = 0 ; i < nBuckets; i++) {
-        buckets[i].clear();
+
+    if(x < 0){
+        cellX = 0;
     }
-    //delete buckets;
-    //free(buckets);
+    if(y < 0){
+        cellY = 0;
+    }
+    return (int)cellX + ((int)cellY * (m_width / m_cellsize));
 }
+// void SpatialHash::clear()
+// {
+//     for (int i = 0 ; i < nBuckets; i++) {
+//         buckets[i].clear();
+//     }
+//     //delete buckets;
+//     //free(buckets);
+// }
 
-// Getters //
-int SpatialHash::getBucketCount()
-{
-    return nBuckets;
-}
+// // Getters //
+// int SpatialHash::getBucketCount()
+// {
+//     return nBuckets;
+// }
 
-Bucket *SpatialHash::getBuckets()
+// Bucket *SpatialHash::getBuckets()
+// {
+//     return buckets;
+// }
+// SpatialHash::~SpatialHash()
+// {
+//    delete[] buckets;
+// }
+
+void SpatialHash::print()
 {
-    return buckets;
-}
-SpatialHash::~SpatialHash()
-{
-   delete[] buckets;
+    for (int i = 0; i < nBuckets; i++){
+        printf("i: %d \t", i);
+        int size = (*table)[i].size();
+        printf("s: %d \n", size);
+    }
 }

@@ -5,13 +5,6 @@
 #include <SFML/System.hpp>
 #include <SFML/Window.hpp>
 
-#include <rapidjson/rapidjson.h>
-#include <rapidjson/document.h>
-#include <rapidjson/filewritestream.h>
-#include <rapidjson/writer.h>
-#include <rapidjson/prettywriter.h>
-
-namespace rj = rapidjson;
 
 #include "utils.hpp"
 #include "particle.hpp"

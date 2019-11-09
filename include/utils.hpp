@@ -77,4 +77,9 @@ double l_map(double x, double input_start, double input_end, double output_start
 sf::Color hsv(int hue, float sat, float val);
 
 char* load_file(char const* path);
+
+float squaredMag(sf::Vector2f vec);
+void viMult(sf::Vector2f &vec, float val);
+sf::Vector2f vrMult(sf::Vector2f &vec, float val);
+
 #endif

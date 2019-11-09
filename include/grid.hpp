@@ -1,7 +1,6 @@
 // Contains Implementation of a Spatial Hash //
 //                                           //
-// Classes                                   //
-//  -Bucket                                  //
+// Classes                                   //                                //
 //  -Spatial Hash                            //
 //                                           //
 ///////////////////////////////////////////////
@@ -9,34 +8,11 @@
 #ifndef GRID_H
 #define GRID_H
 
-#include "engine.hpp"
-#include "ball.hpp"
+// #include "engine.hpp"
+#include "particle.hpp"
 #include <deque>
 #include <iterator>
-
-////////////
-// Bucket //
-////////////
-
-class Bucket
-{
-
-private:
-    std::vector<Ball> Balls;
-    int index;
-    
-public:
-    int length;
-    // Bucket(Bucket&& other) = default;
-    // Bucket& operator=(Bucket&& other) = default;
-
-public:
-
-    void fill(std::vector <Ball>& iBalls);
-    void insert(Ball &ball);
-    std::vector<Ball> *get();
-    void clear();
-};
+#include <list>
 
 
 //////////////////
@@ -46,8 +22,9 @@ public:
 class SpatialHash
 {
 private:
-    Bucket *buckets;
-    std::vector<Ball> *ballqueue;
+
+    std::vector<std::list<Particle>> *table;
+
     int m_width;
     int m_height;
     int m_cellsize;
@@ -55,26 +32,26 @@ private:
 
 public:
     SpatialHash(int width, int height, int cellsize);
-    ~SpatialHash();
+    // ~SpatialHash();
 
     // Constructs a spatial hash given a vector of particles
-    void build(std::vector<Ball>& vecBalls);
-
+    void build(std::vector<Particle>& vecParticles);
+    void print();
     //Returns a list of objects that are nearby.
     /*Nearby is defined by all objects in the cell of the query
      as well any cells touched by the query given the radius */
-    std::vector<Ball>* query(Ball &ball);
+    // std::vector<Particle>* query(Particle &Particle);
 
     // Returns the id of the Bucket that contains a point
-    int pointQuery(float x, float y);
+    int pointHash(float x, float y);
 
-    //Inserts a Ball into its appropriate buckets
-    void insert(Ball &ball);
+    //Inserts a Particle into its appropriate buckets
+    void insert(Particle &particle);
 
-    int getBucketCount();
-    Bucket *getBuckets();
+    // int getBucketCount();
+    // Bucket *getBuckets();
 
-    void clear();
+    // void clear();
 
 
 };

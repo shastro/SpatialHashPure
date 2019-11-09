@@ -1,7 +1,7 @@
 #include "draw.hpp"
+#include "grid.hpp"
 #include "particle.hpp"
 #include "utils.hpp"
-#include "render.hpp"
 #include <ctime>
 #include "unistd.h"
 // /*
@@ -59,153 +59,57 @@ void drawGrid(sf::Color linecolor, int cellsize, int width, int height, sf::Rend
 
 int main(int argc, char**argv) {
 
-    std::string filename;
-
-    if (argc == 1) {
-        printf("Enter filename: ");
-        std::cin >> filename;
-    } else {
-        filename = std::string(argv[1]);
-    }
-
     // CONFIG PARSING //
+    int PARTICLE_COUNT = 100;
+    int CELLSIZE = 10;
+    int FRAMERATE = 60;
+    int WIDTH = 1000;
+    int HEIGHT = 1000;
+    bool DRAW_BOUNDING_BOX = false;
+    bool DRAW_OUTLINE = false;
+    int radius = 5;
+    float mass = radius * radius * 3.14159 * 0.25;
+    int time_delta = 0.001;
 
-    char *sdata_json = load_file("../config/render-conf.json");
-
-    rj::Document configdoc;
-    PRINT("PARSING CONFIG")
-    configdoc.Parse(sdata_json);
-    int FRAMERATE     = configdoc["FRAMERATE"].GetInt();
-    bool DRAW_TEXT    = configdoc["DRAW_TEXT"].GetBool();
-    bool DRAW_OUTLINE = configdoc["DRAW_OUTLINE"].GetBool();
-    bool DRAW_BOUNDING_BOX = configdoc["DRAW_BOUNDING_BOX"].GetBool();
-    const char *data_path   = configdoc["DATA_PATH"].GetString();
-
-    PRINT("PARSING COMPLETE")
-
-    free((void *)sdata_json);
-
-    // DATA PARSING //
-    std::string dp(data_path);
-    const char *data_json = load_file((dp + filename).c_str());
-
-    rj::Document data;
-    PRINT("PARSING DATA")
-    data.Parse(data_json);
-    PRINT("PARSING COMPLETE")
-
-    free((void *)data_json);
-
-
-    int FRAMECOUNT = data["FRAMELIMIT"].GetInt();
 
     // WINDOW SETUP //
     sf::ContextSettings settings;
     settings.antialiasingLevel = 4;
-    int width  = data["WINDOW_DATA"]["width"].GetInt();
-    int height = data["WINDOW_DATA"]["height"].GetInt();
-    sf::RenderWindow window(sf::VideoMode(width, height),
-                            (std::string("Rendering Sim: ") + filename).c_str(), sf::Style::Default, settings);
+
+    sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT),
+                            std::string("Rendering Sim: ").c_str(), sf::Style::Default, settings);
 
 
     PRINT("INITIALIZING PARTICLES")
+
     // Particle Initialization with first frame's data
-    std::vector<Particle*> particles;
-    for (int j = 0; j < data["PARTICLE_COUNT"].GetInt(); j++) {
+    std::vector<Particle> particles;
+
+    srand(time(NULL));
+    for (int j = 0; j < 10000; j++) {
 
 
-        sf::Vector2f pos(0, 0);
-        sf::Vector2f vel(0, 0);
+        sf::Vector2f pos(random(0, WIDTH), random(0, HEIGHT));
+        sf::Vector2f vel(random(-2,2), random(-2,2));
         sf::Vector2f acc(0, 0);
 
-        // Value Capture for shorthand
-        rj::Value& posX = data["FRAME_DATA"][0]["SUBFRAMES"][0]["particles"][j]["p_data"]["p"]["x"];
-        rj::Value& posY = data["FRAME_DATA"][0]["SUBFRAMES"][0]["particles"][j]["p_data"]["p"]["y"];
-        rj::Value& velX = data["FRAME_DATA"][0]["SUBFRAMES"][0]["particles"][j]["p_data"]["v"]["x"];
-        rj::Value& velY = data["FRAME_DATA"][0]["SUBFRAMES"][0]["particles"][j]["p_data"]["v"]["y"];
-        rj::Value& accX = data["FRAME_DATA"][0]["SUBFRAMES"][0]["particles"][j]["p_data"]["a"]["x"];
-        rj::Value& accY = data["FRAME_DATA"][0]["SUBFRAMES"][0]["particles"][j]["p_data"]["a"]["y"];
-        rj::Value& velmag = data["FRAME_DATA"][0]["SUBFRAMES"][0]["particles"][j]["p_data"]["v_mag"];
-        double v_mag = 0.0f;
-
-        if (!posX.IsNull() | !posY.IsNull() ) {
-            pos.x = posX.GetDouble();
-            pos.y = posY.GetDouble();
-        } else {
-            pos.x = 0;
-            pos.y = 0;
-        }
-
-
-        if (!velX.IsNull() | !velY.IsNull() ) {
-            vel.x = velX.GetDouble();
-            vel.y = velY.GetDouble();
-        } else {
-            vel.x = 0;
-            vel.y = 0;
-        }
-
-        if (!accX.IsNull() | !accY.IsNull() ) {
-            acc.x = accX.GetDouble();
-            acc.y = accY.GetDouble();
-        } else {
-            acc.x = 0;
-            acc.y = 0;
-        }
-        if ( !velmag.IsNull() ) {
-            v_mag = velmag.GetDouble();
-        }
-        int radius = data["FRAME_DATA"][0]["SUBFRAMES"][0]["particles"][j]["p_data"]["r"].GetInt();
-        int id     = data["FRAME_DATA"][0]["SUBFRAMES"][0]["particles"][j]["id"].GetInt();
-
-        Particle *p = new Particle(pos, vel, acc, radius, id, v_mag, &window);
-        particles.emplace_back(p);
+        Particle *p = new Particle(pos, vel, radius, mass, j, &window);
+        particles.push_back(*p);
     }
-
-    // Setting Up Text //
-    sf::Text t_frameCount;
-    sf::Text t_simname;
-
-    sf::Font font;
-    if (!font.loadFromFile("../assets/font.ttc")) {
-        PRINT("\e[91;50m[ERROR]: Font not found!\e[37m")
-    }
-
-    if (DRAW_TEXT) {
-        // Framecount
-        t_frameCount.setFont(font);
-        t_frameCount.setPosition(sf::Vector2f(0.0, 30));
-        t_frameCount.setColor(sf::Color::Red);
-        t_frameCount.setCharacterSize(24);
-
-        // Sim Name
-        t_simname.setFont(font);
-        std::string sim("sim: ");
-        t_simname.setString((sim + filename).c_str());
-        t_simname.setColor(sf::Color::Blue);
-        t_simname.setCharacterSize(24);
-
-    }
-
-    PRINT("\e[32mINITIALIZATION COMPLETE\e[37m")
 
     // Grid Lines //
 
-    bool DRAW_GRID;
-    int cellsize;
-    if (data.HasMember("CELLSIZE")) {
-
-        cellsize = data["CELLSIZE"].GetInt();
-        DRAW_GRID = true;
-    } else {
-        DRAW_GRID = false;
-    }
+    bool DRAW_GRID = true;
 
     /////////////
 
     PRINT("BEGINING MAIN LOOP")
     // MAIN FRAMELOOP //
-    for (int i = 0; i < data["FRAMELIMIT"].GetInt(); i++)
+
+    
+    
+    SpatialHash *hashtable = new SpatialHash(1000,1000,CELLSIZE);
+    while (1)
     {
 
 
@@ -219,13 +123,14 @@ int main(int argc, char**argv) {
         //////////////////////////
 
         //Color light blue 189, 209, 242
-        drawGrid(sf::Color(189, 209, 242), 25, width, height, &window);
+        drawGrid(sf::Color(189, 209, 242), 25, WIDTH, HEIGHT, &window);
         ///////////////////////
         // DRAWING PARTICLES //
         ///////////////////////
 
         for (auto & particle : particles) {
-            particle->draw(DRAW_OUTLINE, data["PARTICLE_COUNT"].GetInt());
+            particle->update(time_delta);
+            particle->draw(DRAW_OUTLINE, PARTICLE_COUNT);
         }
 
         if (DRAW_BOUNDING_BOX) {
@@ -233,27 +138,15 @@ int main(int argc, char**argv) {
                 particle->drawBoundingBox();
             }
         }
-        updateParticles(i, particles, data);
 
-        //////////////////
-        // DRAWING TEXT //
-        //////////////////
-        if (DRAW_TEXT) {
-            std::string s("frame: ");
-            s =  s + std::to_string(i);
-            t_frameCount.setString(s.c_str());
 
-            window.draw(t_simname);
-            window.draw(t_frameCount);
-
-        }
 
         //////////////////
         // DRAWING HASH GRID //
         //////////////////
 
         if (DRAW_GRID) {
-            drawGrid(sf::Color(50,50,50), cellsize, width, height, &window);
+            drawGrid(sf::Color(50,50,50), cellsize, WIDTH, HEIGHT, &window);
         }
 
         // DISPLAY //
@@ -300,12 +193,12 @@ int main(int argc, char**argv) {
 
             }
 
-            if (event.key.code == sf::Keyboard::R) {
-                i = 0;
-            }
-            if(event.key.code == sf::Keyboard::Right) {
-                i += 1;
-            }
+            // if (event.key.code == sf::Keyboard::R) {
+            //     i = 0;
+            // }
+            // if(event.key.code == sf::Keyboard::Right) {
+            //     i += 1;
+            // }
         }
 
         if (event.type == sf::Event::Closed) {
