@@ -150,9 +150,11 @@ void SpatialHash::collidePairs()
             //N^2 loop through objects in each bucket
             for(auto p : temp){
                 for(auto o : temp){
-                    if ((*detectCollision)(p,o)){
-                        (*applyCollision)(p);
-                        // printf("DETECTED\n");
+                    if(p->m_Id != o->m_Id){
+                        if ((*detectCollision)(p,o)){
+                            (*applyCollision)(p);
+                            // printf("DETECTED\n");
+                        }
                     }
                 }
             }
@@ -173,7 +175,6 @@ void SpatialHash::update(double time_delta)
                 checked[p->m_Id] = true;  
                 p->update(time_delta);
                 p->draw(false);
-                p->drawBoundingBox();
                 
             }
             p->colliding = false;

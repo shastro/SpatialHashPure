@@ -64,9 +64,7 @@ bool detectCollision(Particle *a, Particle *b)
     float bR = b->m_radius;
 
     if (squaredMag(dist) < ((aR + bR) * (aR + bR))) {
-        printf("%lf\n", squaredMag(dist));
         return true;
-
     } else {
         return false;
     }
@@ -83,15 +81,15 @@ void applyCollision(Particle *a)
 int main(int argc, char**argv) {
 
     // CONFIG PARSING //
-    int PARTICLE_COUNT = 2;
+    int PARTICLE_COUNT = 5000;
     
     int FRAMERATE = 60;
     int WIDTH = 1000;
     int HEIGHT = 1000;
     bool DRAW_BOUNDING_BOX = false;
     bool DRAW_OUTLINE = false;
-    int radius = 100;
-    int CELLSIZE = 500;
+    int radius = 5;
+    int CELLSIZE = 4 *radius;
     float mass = radius * radius * 3.14159 * 0.25;
     double time_delta = 2;
 
@@ -143,7 +141,7 @@ int main(int argc, char**argv) {
 
         clock_t start, end;
         start = clock();
-        window.clear(sf::Color(250, 250, 250));
+        window.clear(sf::Color(0, 0, 0));
 
         //////////////////////////
         // DRAW BACKGROUND GRID //
@@ -159,32 +157,32 @@ int main(int argc, char**argv) {
         hashtable->build(particles);
         hashtable->collidePairs(); //Performs all collision pair checking and physics
         hashtable->update(time_delta);
-        // hashtable->print();
         hashtable->clear();
 
 
-        // hashtable->build(particles);
-        
-        ///////////////////////
-        // DRAWING PARTICLES //
-        ///////////////////////
-
-        // for (auto & particle : particles) {
-        //     particle.update(time_delta);
-        //     particle.draw(DRAW_OUTLINE);
-        // }
-
-        // if (DRAW_BOUNDING_BOX) {
-        //     for (auto & particle : particles) {
-        //         particle.drawBoundingBox();
+        //////////////
+        // Non Hash //
+        //////////////
+        // for(auto p : particles){
+        //     for(auto o : particles){
+        //         if(p->m_Id != o->m_Id){
+        //             if ((*detectCollision)(p,o)){
+        //                 (*applyCollision)(p);
+        //                 // printf("DETECTED\n");
+        //             }
+        //         }
         //     }
         // }
 
+        // for(auto p : particles){
+        //     p->update(time_delta);
+        //     p->draw(false);
+        //     p->colliding = false;
+        // }
 
-
-        //////////////////
+        ///////////////////////
         // DRAWING HASH GRID //
-        //////////////////
+        ///////////////////////
 
         if (DRAW_GRID) {
             drawGrid(sf::Color(50,50,50), CELLSIZE, WIDTH, HEIGHT, &window);
