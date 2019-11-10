@@ -57,6 +57,8 @@ void drawGrid(sf::Color linecolor, int cellsize, int width, int height, sf::Rend
 
 }
 
+
+
 bool detectCollision(Particle *a, Particle *b)
 {
     sf::Vector2f dist = a->m_pos - b->m_pos;
@@ -78,17 +80,26 @@ void applyCollision(Particle *a)
 
 }
 
+int COLLISION_CHECKS = 0;
+
 int main(int argc, char**argv) {
 
+
+    bool USEHASH = false;
+
+    if(atoi(argv[1]) == 1){
+        USEHASH = true;
+    }
+
     // CONFIG PARSING //
-    int PARTICLE_COUNT = 5000;
+    int PARTICLE_COUNT = 10000;
     
     int FRAMERATE = 60;
     int WIDTH = 1000;
     int HEIGHT = 1000;
     bool DRAW_BOUNDING_BOX = false;
     bool DRAW_OUTLINE = false;
-    int radius = 5;
+    int radius = 2;
     int CELLSIZE = 4 *radius;
     float mass = radius * radius * 3.14159 * 0.25;
     double time_delta = 2;
@@ -123,25 +134,54 @@ int main(int argc, char**argv) {
 
     bool DRAW_GRID = true;
 
-    /////////////
+    //////////
+    // TEXT //
+    //////////
 
-    PRINT("BEGINING MAIN LOOP")
-    // MAIN FRAMELOOP //
+    sf::Text t_CollideCount;
+    sf::Text t_PCOUNT;
 
-    
-    
+    sf::Font font;
+    if (!font.loadFromFile("../font.ttc")) {
+        printf("ERROR, UNABLE TO LOAD FONT!\n");
+    }
+
+    //COLLIDE COUNT
+    t_CollideCount.setFont(font);
+    t_CollideCount.setPosition(sf::Vector2f(0.0, 30));
+    t_CollideCount.setColor(sf::Color::White);
+    t_CollideCount.setCharacterSize(24);
+
+    // PCOUNT
+    t_PCOUNT.setFont(font);
+    std::string tmp = std::to_string(PARTICLE_COUNT);
+    t_PCOUNT.setString(tmp.c_str());
+    t_PCOUNT.setColor(sf::Color::White);
+    t_PCOUNT.setCharacterSize(24);
+
+
+    // Hash Setup //
     SpatialHash *hashtable = new SpatialHash(1000,1000,CELLSIZE);
     hashtable->attach_DetectCollision(detectCollision);
     hashtable->attach_ApplyCollision(applyCollision);
 
+    PRINT("BEGINING MAIN LOOP")
+
+
+    sf::RectangleShape textbox(sf::Vector2f(0,0));
+    textbox.setSize(sf::Vector2f(125, 75));
+    textbox.setFillColor(sf::Color::Black);
+    ////////////////////
+    // MAIN FRAMELOOP //
+    ////////////////////
     while (1)
     {
 
-
+        COLLISION_CHECKS = 0;
 
         clock_t start, end;
         start = clock();
-        window.clear(sf::Color(0, 0, 0));
+        window.clear(sf::Color(221, 221, 221));
 
         //////////////////////////
         // DRAW BACKGROUND GRID //
@@ -154,32 +194,35 @@ int main(int argc, char**argv) {
         // HASHING AND PHYSICS //
         /////////////////////////
 
-        hashtable->build(particles);
-        hashtable->collidePairs(); //Performs all collision pair checking and physics
-        hashtable->update(time_delta);
-        hashtable->clear();
-
+        if(USEHASH){
+            hashtable->build(particles);
+            hashtable->collidePairs(COLLISION_CHECKS); //Performs all collision pair checking and physics
+            hashtable->update(time_delta);
+            hashtable->clear();
+        }else{
 
         //////////////
         // Non Hash //
         //////////////
-        // for(auto p : particles){
-        //     for(auto o : particles){
-        //         if(p->m_Id != o->m_Id){
-        //             if ((*detectCollision)(p,o)){
-        //                 (*applyCollision)(p);
-        //                 // printf("DETECTED\n");
-        //             }
-        //         }
-        //     }
-        // }
+            for(auto p : particles){
+                for(auto o : particles){
+                    if(p->m_Id != o->m_Id){
+                        if ((*detectCollision)(p,o)){
+                            (*applyCollision)(p);
+                            // printf("DETECTED\n");
+                        }
+                        COLLISION_CHECKS++;
+                    }
+                }
+            }
 
-        // for(auto p : particles){
-        //     p->update(time_delta);
-        //     p->draw(false);
-        //     p->colliding = false;
-        // }
+            for(auto p : particles){
+                p->update(time_delta);
+                p->draw(false);
+                p->colliding = false;
+            }
 
+        }
         ///////////////////////
         // DRAWING HASH GRID //
         ///////////////////////
@@ -187,6 +230,11 @@ int main(int argc, char**argv) {
         if (DRAW_GRID) {
             drawGrid(sf::Color(50,50,50), CELLSIZE, WIDTH, HEIGHT, &window);
         }
+
+        t_CollideCount.setString(std::to_string(COLLISION_CHECKS).c_str());
+        window.draw(textbox);
+        window.draw(t_CollideCount);
+        window.draw(t_PCOUNT);
 
         // DISPLAY //
         window.display();

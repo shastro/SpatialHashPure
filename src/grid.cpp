@@ -43,14 +43,6 @@ void SpatialHash::build(const std::vector<Particle*>& vecParticles)
         insert(p);
     }
 
-    // for(int i = 0; i < nBuckets; i++)
-    // {
-    //     std::list<Particle> &temp = (*table)[i];
-
-    //     for(auto &p : temp){
-    //         insert(p);
-    //     }
-
 }
 
 void SpatialHash::attach_DetectCollision( bool (*collide)(Particle *a, Particle *b))
@@ -138,7 +130,7 @@ void SpatialHash::insert(Particle* particle)
 }
 
 
-void SpatialHash::collidePairs()
+void SpatialHash::collidePairs(int &COLLISION_CHECKS)
 {
     //N loop through buckets
     for(int i = 0; i < nBuckets; i++)
@@ -155,6 +147,7 @@ void SpatialHash::collidePairs()
                             (*applyCollision)(p);
                             // printf("DETECTED\n");
                         }
+                        COLLISION_CHECKS++;
                     }
                 }
             }

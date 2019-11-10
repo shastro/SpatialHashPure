@@ -18,7 +18,7 @@
 //////////////////
 // Spatial Hash //
 //////////////////
-
+template<typename T>
 class SpatialHash
 {
 private:
@@ -43,7 +43,7 @@ public:
     void build(const std::vector<Particle*>& vecParticles);
     void clear();
     void update(double time_delta);
-    void collidePairs();
+    void collidePairs(int &COLLISION_CHECKS);
     void print();
 
     //Directives Low-Level
