@@ -7,7 +7,7 @@
 */
 class Particle{
 
-private:
+public:
     //Kinematic Data
     sf::Vector2f m_pos; //Position
     sf::Vector2f m_vel; //Velocity
@@ -15,16 +15,12 @@ private:
     sf::Vector2f m_p;   //Momentum
 
     //Radius
-    int m_radius;
-    float m_mass;
+
   
   public:  
     //Identification
-    unsigned int m_id;
+    unsigned int m_Id;
 
-    //Hash Ids
-    int bucketids[4];
-    int bucketids_Max; 
 
     //SFML
     sf::Color m_color;
@@ -33,41 +29,43 @@ private:
     int m_winH;
     int m_winW;
 
+    int m_radius;
+    float m_mass;
+
+    bool colliding;
+
 
 
     Particle(sf::Vector2f pos, sf::Vector2f vel, int radius, float mass, unsigned int id, sf::RenderWindow *window)
     :m_pos(pos.x, pos.y), m_vel(vel.x, vel.y)
     {
 
-        bucketids_Max = 0;
+        colliding = false;
         m_radius = radius;
-        m_id     = id;
+        m_Id     = id;
         m_window = window;
         m_winW   = 1000;
-        m_winW   = 1000;
+        m_winH   = 1000;
         m_mass   = mass;
         m_p = m_vel * m_mass;
+
+        m_color = sf::Color::Blue;
     }
    
 public: 
     
-
-
-    
-    
-
     //Directives
     void update(double time_delta);
-    void draw(bool DRAW_OUTLINE, int PARTICLE_COUNT);
+    void draw(bool DRAW_OUTLINE);
     void applyForce(sf::Vector2f force, double time_delta);
     void drawBoundingBox();
-
     //Getters
-    float getRadius();
-    float getMass();
+    float getRadius() const;
+    float getMass()   const;
     sf::Vector2f &getPos();
-    //Setters
-    void addBucket(int bucketid);
+    float getX() const;
+    float getY() const;
+
 };
 
 #endif

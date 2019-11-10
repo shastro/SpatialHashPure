@@ -45,40 +45,23 @@ void Particle::drawBoundingBox()
     m_window->draw(br);
 }
 
-void Particle::draw(bool DRAW_OUTLINE, int PARTICLE_COUNT)
+void Particle::draw(bool DRAW_OUTLINE)
 {
 
-    sf::CircleShape center_disp;
-
-    float v_mag = sqrt(squaredMag(vrMult(m_p,m_mass)));
-
-    // if(colliding){
-    //     m_color = sf::Color::Red;
-    // }else{
-    double hue_val;
-    int min = 0;
-    int max = 500000;
-    if (v_mag < max) {
-        hue_val = l_map(v_mag, min, max, 235, 0);
-
-    } else {
-        hue_val = 0;
-    }
-    //hue_val = l_map(m_id, 0, PARTICLE_COUNT, 235, 0);
-
-    m_color = hsv((int)hue_val, 1.0f, 1.0f);
-    //}
-
-    // PRINT("DRAWCALL PARTICLE")
     //Particle
+
+    if(colliding){
+        m_color = sf::Color::Red;
+    }else{
+        m_color = sf::Color::Blue;
+    }
+
     m_shape.setOrigin(m_radius, m_radius);
     m_shape.setRadius(m_radius);
     m_shape.setFillColor(m_color);
     m_shape.setPosition(m_pos);
 
 
- 
-    //bounding_box.setFillColor(sf::Color::White);
 
     if (m_radius < 10) {
         m_shape.setPointCount(10);
@@ -88,14 +71,13 @@ void Particle::draw(bool DRAW_OUTLINE, int PARTICLE_COUNT)
         m_shape.setOutlineColor(sf::Color::Black);
         m_shape.setOutlineThickness(2);
     }
-    // LOG("x: ", m_pos.x)
-    // LOG("y: ", m_pos.y)
-    // LOG("r: ", m_radius)
+
 
     m_window->draw(m_shape);
     //colliding = false;
 
     //Center Display
+    // sf::CircleShape center_disp;
     // center_disp.setRadius(5);
     // center_disp.setOrigin(5, 5);
     // center_disp.setPosition(m_pos);
@@ -110,41 +92,35 @@ void Particle::draw(bool DRAW_OUTLINE, int PARTICLE_COUNT)
 void Particle::update(double time_delta)
 {
 
-
-    int b_zone = 10;
-
-    sf::Vector2f m_acc_cpy = m_acc;
-    sf::Vector2f m_vel_cpy = m_vel;
-
     //Euler Method with momentum principle
-    m_vel = vrMult(m_p, 1/m_mass);
+    m_vel = vrMult(m_p, 1.0f/(float)m_mass);
     m_pos = m_pos + vrMult(m_vel, time_delta);
 
     //Speed Clamping at Rest
-    if(squaredMag(m_p/m_mass) < 0.00005){
+    if(squaredMag(vrMult(m_p, 1.0f/(float)m_mass)) < 0.00005){
         m_p = vrMult(m_p , 0);
     }
 
-    float c_e = 0.5; //Coefficient of Elasticity (roughly speaking) this only applies to wall collision 
+    float c_e = 1; //Coefficient of Elasticity (roughly speaking) this only applies to wall collision 
 
 
     //Edge Detection
-    if (m_pos.x + m_radius > m_winW - b_zone) {
-        m_pos.x = m_winW - b_zone - m_radius;
+    if (m_pos.x + m_radius > m_winW) {
+        m_pos.x = m_winW - m_radius;
         m_p.x *= -c_e;
     }
-    if (m_pos.x - m_radius < b_zone) {
-        m_pos.x = m_radius + b_zone;
+    if (m_pos.x - m_radius < 0) {
+        m_pos.x = m_radius;
         m_p.x *= -c_e;
     }
 
-    if (m_pos.y +  m_radius > m_winH - b_zone) {
-        m_pos.y = m_winH - b_zone - m_radius;
+    if (m_pos.y +  m_radius > m_winH) {
+        m_pos.y = m_winH- m_radius;
         m_p.y *= -c_e;
     }
 
-    if (m_pos.y - m_radius < b_zone) {
-        m_pos.y = m_radius + b_zone;
+    if (m_pos.y - m_radius < 0) {
+        m_pos.y = m_radius;
         m_p.y *= -c_e;
     }
 
@@ -155,30 +131,21 @@ void Particle::applyForce(sf::Vector2f force, double time_delta)
 {
     
     m_p = m_p + vrMult(force, time_delta);
-    m_vel = vrMult(m_p, 1/m_mass);
 
 }
 
-void Particle::addBucket(int bucketid)
-{
- //bucketids.emplace_back(bucketid);
- // if(bucketids_Max < 3){
-     bucketids[bucketids_Max] = bucketid;
- // if(bucketids_Max < 3)
-     bucketids_Max++;
- // }
-}
+
 
 /////////////
 // Getters //
 /////////////
 
-float Particle::getRadius()
+float Particle::getRadius() const
 {
     return m_radius;
 }
 
-float Particle::getMass()
+float Particle::getMass() const
 {
     return m_mass;
 }
@@ -186,4 +153,14 @@ float Particle::getMass()
 sf::Vector2f &Particle::getPos()
 {
     return m_pos;
+}
+
+float Particle::getX() const
+{
+    return m_pos.x;
+}
+
+float Particle::getY() const
+{
+    return m_pos.y;
 }

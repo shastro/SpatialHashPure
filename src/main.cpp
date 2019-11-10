@@ -57,19 +57,43 @@ void drawGrid(sf::Color linecolor, int cellsize, int width, int height, sf::Rend
 
 }
 
+bool detectCollision(Particle *a, Particle *b)
+{
+    sf::Vector2f dist = a->m_pos - b->m_pos;
+    float aR = a->m_radius;
+    float bR = b->m_radius;
+
+    if (squaredMag(dist) < ((aR + bR) * (aR + bR))) {
+        printf("%lf\n", squaredMag(dist));
+        return true;
+
+    } else {
+        return false;
+    }
+}
+
+void applyCollision(Particle *a)
+{
+
+    a->colliding = true;
+    
+
+}
+
 int main(int argc, char**argv) {
 
     // CONFIG PARSING //
-    int PARTICLE_COUNT = 100;
-    int CELLSIZE = 10;
+    int PARTICLE_COUNT = 2;
+    
     int FRAMERATE = 60;
     int WIDTH = 1000;
     int HEIGHT = 1000;
     bool DRAW_BOUNDING_BOX = false;
     bool DRAW_OUTLINE = false;
-    int radius = 5;
+    int radius = 100;
+    int CELLSIZE = 500;
     float mass = radius * radius * 3.14159 * 0.25;
-    int time_delta = 0.001;
+    double time_delta = 2;
 
 
     // WINDOW SETUP //
@@ -83,10 +107,10 @@ int main(int argc, char**argv) {
     PRINT("INITIALIZING PARTICLES")
 
     // Particle Initialization with first frame's data
-    std::vector<Particle> particles;
+    std::vector<Particle*> particles;
 
     srand(time(NULL));
-    for (int j = 0; j < 10000; j++) {
+    for (int j = 0; j < PARTICLE_COUNT; j++) {
 
 
         sf::Vector2f pos(random(0, WIDTH), random(0, HEIGHT));
@@ -94,7 +118,7 @@ int main(int argc, char**argv) {
         sf::Vector2f acc(0, 0);
 
         Particle *p = new Particle(pos, vel, radius, mass, j, &window);
-        particles.push_back(*p);
+        particles.push_back(p);
     }
 
     // Grid Lines //
@@ -109,6 +133,9 @@ int main(int argc, char**argv) {
     
     
     SpatialHash *hashtable = new SpatialHash(1000,1000,CELLSIZE);
+    hashtable->attach_DetectCollision(detectCollision);
+    hashtable->attach_ApplyCollision(applyCollision);
+
     while (1)
     {
 
@@ -123,21 +150,35 @@ int main(int argc, char**argv) {
         //////////////////////////
 
         //Color light blue 189, 209, 242
-        drawGrid(sf::Color(189, 209, 242), 25, WIDTH, HEIGHT, &window);
+        // drawGrid(sf::Color(189, 209, 242), 25, WIDTH, HEIGHT, &window);
+
+        /////////////////////////
+        // HASHING AND PHYSICS //
+        /////////////////////////
+
+        hashtable->build(particles);
+        hashtable->collidePairs(); //Performs all collision pair checking and physics
+        hashtable->update(time_delta);
+        // hashtable->print();
+        hashtable->clear();
+
+
+        // hashtable->build(particles);
+        
         ///////////////////////
         // DRAWING PARTICLES //
         ///////////////////////
 
-        for (auto & particle : particles) {
-            particle->update(time_delta);
-            particle->draw(DRAW_OUTLINE, PARTICLE_COUNT);
-        }
+        // for (auto & particle : particles) {
+        //     particle.update(time_delta);
+        //     particle.draw(DRAW_OUTLINE);
+        // }
 
-        if (DRAW_BOUNDING_BOX) {
-            for (auto & particle : particles) {
-                particle->drawBoundingBox();
-            }
-        }
+        // if (DRAW_BOUNDING_BOX) {
+        //     for (auto & particle : particles) {
+        //         particle.drawBoundingBox();
+        //     }
+        // }
 
 
 
@@ -146,7 +187,7 @@ int main(int argc, char**argv) {
         //////////////////
 
         if (DRAW_GRID) {
-            drawGrid(sf::Color(50,50,50), cellsize, WIDTH, HEIGHT, &window);
+            drawGrid(sf::Color(50,50,50), CELLSIZE, WIDTH, HEIGHT, &window);
         }
 
         // DISPLAY //
@@ -225,7 +266,7 @@ int main(int argc, char**argv) {
     }
 
     for (auto & particle : particles) {
-        free(particle);
+        free((void *)&particle);
     }
 
 

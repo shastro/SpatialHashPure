@@ -23,35 +23,37 @@ class SpatialHash
 {
 private:
 
-    std::vector<std::list<Particle>> *table;
+    std::vector<std::list<Particle*>> *table;
 
     int m_width;
     int m_height;
     int m_cellsize;
+    int m_particleCount;
     int nBuckets;
+
+    bool (*detectCollision)(Particle *a, Particle *b);
+    
+    void (*applyCollision)(Particle *a);
 
 public:
     SpatialHash(int width, int height, int cellsize);
     // ~SpatialHash();
 
-    // Constructs a spatial hash given a vector of particles
-    void build(std::vector<Particle>& vecParticles);
+    //Directives High-Level
+    void build(const std::vector<Particle*>& vecParticles);
+    void clear();
+    void update(double time_delta);
+    void collidePairs();
     void print();
-    //Returns a list of objects that are nearby.
-    /*Nearby is defined by all objects in the cell of the query
-     as well any cells touched by the query given the radius */
-    // std::vector<Particle>* query(Particle &Particle);
 
-    // Returns the id of the Bucket that contains a point
+    //Directives Low-Level
     int pointHash(float x, float y);
+    void insert(Particle *particle);
 
-    //Inserts a Particle into its appropriate buckets
-    void insert(Particle &particle);
 
-    // int getBucketCount();
-    // Bucket *getBuckets();
-
-    // void clear();
+    //Setters
+    void attach_DetectCollision( bool (*collide)(Particle *a, Particle *b));
+    void attach_ApplyCollision(void (*resolve)(Particle *a));
 
 
 };
