@@ -101,7 +101,7 @@ void Particle::update(double time_delta)
         m_p = vrMult(m_p , 0);
     }
 
-    float c_e = 1; //Coefficient of Elasticity (roughly speaking) this only applies to wall collision 
+    float c_e = 0.5; //Coefficient of Elasticity (roughly speaking) this only applies to wall collision 
 
 
     //Edge Detection

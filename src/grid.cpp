@@ -4,8 +4,8 @@
 //////////////////
 // Spatial Hash //
 //////////////////
-
-SpatialHash::SpatialHash(int width, int height, int cellsize)
+template<typename T>
+SpatialHash<T>::SpatialHash(int width, int height, int cellsize)
     {
         m_width    = width;
         m_height   = height;
@@ -19,22 +19,27 @@ SpatialHash::SpatialHash(int width, int height, int cellsize)
 
         nBuckets = (cols + 1) * (rows + 1);
 
-        table = new std::vector<std::list<Particle*>>;
+        table = new std::vector<std::list<T*>>;
         table->reserve(nBuckets);
 
         for (int i = 0; i < nBuckets; i++){
-            std::list<Particle*> *temp = new std::list<Particle*>;
+            std::list<T*> *temp = new std::list<T*>;
             (*table).push_back(*temp);
         }
 
     }
 
-// SpatialHash::~SpatialHash()
-// {
-//    delete[] buckets;
-// }
-
-void SpatialHash::build(const std::vector<Particle*>& vecParticles)
+template<typename T>
+SpatialHash<T>::~SpatialHash()
+{
+   for(int i = 0; i < nBuckets; i++){
+        (*table)[i].clear();
+        delete &((*table)[i]);
+   }
+   delete table;
+}
+template<typename T>
+void SpatialHash<T>::build(const std::vector<T*>& vecParticles)
 {
 
     //Place Particles in buckets
@@ -44,12 +49,13 @@ void SpatialHash::build(const std::vector<Particle*>& vecParticles)
     }
 
 }
-
-void SpatialHash::attach_DetectCollision( bool (*collide)(Particle *a, Particle *b))
+template<typename T>
+void SpatialHash<T>::attach_DetectCollision( bool (*collide)(T* a, T* b))
 {
     detectCollision = collide;
 }
-void SpatialHash::attach_ApplyCollision(void (*resolve)(Particle *a))
+template<typename T>
+void SpatialHash<T>::attach_ApplyCollision(void (*resolve)(T* a))
 {
     applyCollision = resolve;
 }
@@ -59,7 +65,8 @@ void SpatialHash::attach_ApplyCollision(void (*resolve)(Particle *a))
 *@param y, y coord of point
 *@return cellId
 */
-int SpatialHash::pointHash(float x, float y)
+template<typename T>
+int SpatialHash<T>::pointHash(float x, float y)
 {
     float cellX = floor(x / m_cellsize);
     float cellY = floor(y / m_cellsize);
@@ -86,7 +93,8 @@ int SpatialHash::pointHash(float x, float y)
 /** Hashes a Particle to its relevant cells within grid
 *@param Ref to a particle->
 */
-void SpatialHash::insert(Particle* particle)
+template<typename T>
+void SpatialHash<T>::insert(T* particle)
 {
     // Upper Left
     float ulX = particle->getX() - particle->getRadius();
@@ -129,13 +137,13 @@ void SpatialHash::insert(Particle* particle)
 
 }
 
-
-void SpatialHash::collidePairs(int &COLLISION_CHECKS)
+template<typename T>
+void SpatialHash<T>::collidePairs(int &COLLISION_CHECKS)
 {
     //N loop through buckets
     for(int i = 0; i < nBuckets; i++)
     {
-        std::list<Particle*> &temp = (*table)[i];
+        std::list<T*> &temp = (*table)[i];
 
         if(temp.size() > 1){
             
@@ -154,14 +162,14 @@ void SpatialHash::collidePairs(int &COLLISION_CHECKS)
         }
     }
 }
-
-void SpatialHash::update(double time_delta)
+template<typename T>
+void SpatialHash<T>::update(double time_delta)
 {
     bool checked[m_particleCount] = {false};
 
     for(int i = 0; i < nBuckets; i++)
     {
-        std::list<Particle*> &temp = (*table)[i];
+        std::list<T*> &temp = (*table)[i];
 
         for(auto p : temp){
             if(!checked[p->m_Id]){
@@ -175,16 +183,16 @@ void SpatialHash::update(double time_delta)
 
     } 
 }
-
-void SpatialHash::clear()
+template<typename T>
+void SpatialHash<T>::clear()
 {
     for(int i = 0; i < nBuckets; i++)
     {
         (*table)[i].clear();
     }
 }
-
-void SpatialHash::print()
+template<typename T>
+void SpatialHash<T>::print()
 {
     for (int i = 0; i < nBuckets; i++)
     {
@@ -193,3 +201,6 @@ void SpatialHash::print()
         printf("s: %d \n", size);
     }
 }
+
+template class SpatialHash<Particle>;
+// template class SpatialHash<Ball>;

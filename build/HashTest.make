@@ -42,16 +42,16 @@ ifeq ($(config),release)
   TARGETDIR = ../bin
   TARGET = $(TARGETDIR)/HashTest
   OBJDIR = obj/Release
-  DEFINES +=
+  DEFINES += -DNDEBUG
   INCLUDES += -I../include
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
-  ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -g -g -Wall -O3
-  ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -g -g -Wall -O3
+  ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -O3 -O3
+  ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -O3 -O3
   ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
   LIBS += -lsfml-graphics -lsfml-window -lsfml-system
   LDDEPS +=
-  ALL_LDFLAGS += $(LDFLAGS)
+  ALL_LDFLAGS += $(LDFLAGS) -s
   LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
   define PREBUILDCMDS
   endef
@@ -65,7 +65,6 @@ all: prebuild prelink $(TARGET)
 endif
 
 OBJECTS := \
-	$(OBJDIR)/ball.o \
 	$(OBJDIR)/grid.o \
 	$(OBJDIR)/main.o \
 	$(OBJDIR)/particle.o \
@@ -128,9 +127,6 @@ else
 $(OBJECTS): | $(OBJDIR)
 endif
 
-$(OBJDIR)/ball.o: ../src/ball.cpp
-	@echo $(notdir $<)
-	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/grid.o: ../src/grid.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"

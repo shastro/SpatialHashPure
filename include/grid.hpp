@@ -23,7 +23,7 @@ class SpatialHash
 {
 private:
 
-    std::vector<std::list<Particle*>> *table;
+    std::vector<std::list<T*>> *table;
 
     int m_width;
     int m_height;
@@ -31,16 +31,16 @@ private:
     int m_particleCount;
     int nBuckets;
 
-    bool (*detectCollision)(Particle *a, Particle *b);
+    bool (*detectCollision)(T *a, T *b);
     
-    void (*applyCollision)(Particle *a);
+    void (*applyCollision)(T *a);
 
 public:
     SpatialHash(int width, int height, int cellsize);
-    // ~SpatialHash();
+    ~SpatialHash();
 
     //Directives High-Level
-    void build(const std::vector<Particle*>& vecParticles);
+    void build(const std::vector<T*>& vecParticles);
     void clear();
     void update(double time_delta);
     void collidePairs(int &COLLISION_CHECKS);
@@ -48,12 +48,12 @@ public:
 
     //Directives Low-Level
     int pointHash(float x, float y);
-    void insert(Particle *particle);
+    void insert(T *particle);
 
 
     //Setters
-    void attach_DetectCollision( bool (*collide)(Particle *a, Particle *b));
-    void attach_ApplyCollision(void (*resolve)(Particle *a));
+    void attach_DetectCollision( bool (*collide)(T *a, T *b));
+    void attach_ApplyCollision(void (*resolve)(T *a));
 
 
 };

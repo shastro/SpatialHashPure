@@ -46,7 +46,7 @@ void drawGrid(sf::Color linecolor, int cellsize, int width, int height, sf::Rend
         // line[1] = sf::Vertex (sf::Vector2f(1000, y1), linecolor);
 
         line[0] = sf::Vertex (sf::Vector2f(1, y1),  linecolor);
-        line[1] = sf::Vertex (sf::Vector2f(1000, y1), linecolor);
+        line[1] = sf::Vertex (sf::Vector2f(width, y1), linecolor);
         // line2[0] = sf::Vertex (sf::Vector2f(0, y1),      linecolor);
         // line2[1] = sf::Vertex (sf::Vector2f(width, y1),  linecolor);
 
@@ -92,15 +92,17 @@ int main(int argc, char**argv) {
     }
 
     // CONFIG PARSING //
-    int PARTICLE_COUNT = 10000;
+    int PARTICLE_COUNT = 1000;
     
     int FRAMERATE = 60;
     int WIDTH = 1000;
     int HEIGHT = 1000;
     bool DRAW_BOUNDING_BOX = false;
     bool DRAW_OUTLINE = false;
-    int radius = 2;
-    int CELLSIZE = 4 *radius;
+    int radius = 1;
+    int CELLSIZE = 4 * radius;
+    printf("%d\n",CELLSIZE);
+
     float mass = radius * radius * 3.14159 * 0.25;
     double time_delta = 2;
 
@@ -127,6 +129,8 @@ int main(int argc, char**argv) {
         sf::Vector2f acc(0, 0);
 
         Particle *p = new Particle(pos, vel, radius, mass, j, &window);
+        p->m_winW = WIDTH;
+        p->m_winH = HEIGHT;
         particles.push_back(p);
     }
 
@@ -140,6 +144,7 @@ int main(int argc, char**argv) {
 
     sf::Text t_CollideCount;
     sf::Text t_PCOUNT;
+    sf::Text t_FPS;
 
     sf::Font font;
     if (!font.loadFromFile("../font.ttc")) {
@@ -159,9 +164,15 @@ int main(int argc, char**argv) {
     t_PCOUNT.setColor(sf::Color::White);
     t_PCOUNT.setCharacterSize(24);
 
+    // FPS
+    t_FPS.setFont(font);
+    t_FPS.setPosition(sf::Vector2f(0.0, 60));
+    t_FPS.setColor(sf::Color::White);
+    t_FPS.setCharacterSize(24);
+
 
     // Hash Setup //
-    SpatialHash *hashtable = new SpatialHash(1000,1000,CELLSIZE);
+    SpatialHash<Particle> *hashtable = new SpatialHash<Particle>(WIDTH,HEIGHT,CELLSIZE);
     hashtable->attach_DetectCollision(detectCollision);
     hashtable->attach_ApplyCollision(applyCollision);
 
@@ -169,11 +180,14 @@ int main(int argc, char**argv) {
 
 
     sf::RectangleShape textbox(sf::Vector2f(0,0));
-    textbox.setSize(sf::Vector2f(125, 75));
+    textbox.setSize(sf::Vector2f(125, 95));
     textbox.setFillColor(sf::Color::Black);
     ////////////////////
     // MAIN FRAMELOOP //
     ////////////////////
+    int frameCount = 0;
+    float time_total = 0;
+    float fps = 0;
     while (1)
     {
 
@@ -231,10 +245,13 @@ int main(int argc, char**argv) {
             drawGrid(sf::Color(50,50,50), CELLSIZE, WIDTH, HEIGHT, &window);
         }
 
+    
+        t_FPS.setString(std::to_string(fps).c_str());
         t_CollideCount.setString(std::to_string(COLLISION_CHECKS).c_str());
         window.draw(textbox);
         window.draw(t_CollideCount);
         window.draw(t_PCOUNT);
+        window.draw(t_FPS);
 
         // DISPLAY //
         window.display();
@@ -243,16 +260,24 @@ int main(int argc, char**argv) {
         //////////////////////////
         // FRAMERATE MANAGEMENT //
         //////////////////////////
+        
         double time = ((double)(end - start) / (double)CLOCKS_PER_SEC) * 1000000;
         double refresh_rate = ((double)1     / (double)FRAMERATE)      * 1000000;
         double remainder;
         if (refresh_rate - time > 0) {
 
             remainder = refresh_rate - time; // In micro-seconds
+            
         } else {
             remainder = 0;
         }
         usleep(remainder);
+
+        frameCount++;
+        time_total += time/(float)1000000;
+        // fps = frameCount / time_total;
+        fps = 1.0 / (time / ((float) 1000000));
+        std::cout << fps << std::endl;
 
         //LOG("FRAME: ", i)
         // LOG("FPS: ", time / 100)
@@ -292,29 +317,10 @@ int main(int argc, char**argv) {
             window.close();
             return 0;
         }
+        
     }
 
     PRINT("FINISHED")
-    sf::Event newevent;
-    while (1) {
-
-
-
-        window.pollEvent(newevent);
-
-        if (newevent.type == sf::Event::Closed) {
-            // free(vlines);
-            window.close();
-            return 0;
-        }
-
-
-    }
-
-    for (auto & particle : particles) {
-        free((void *)&particle);
-    }
-
 
     return 0;
 
